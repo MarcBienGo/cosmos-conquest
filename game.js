@@ -36,12 +36,35 @@ function movePlayer(event) {
 
 // Function to spawn enemies
 function spawnEnemy() {
+    // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
+    let side = Math.floor(Math.random() * 4) + 1;
     let enemy = {
-        x: canvas.width,
-        y: Math.random() * (canvas.height - 20),
+        x: 0,
+        y: 0,
         width: 20,
         height: 20
     };
+
+    // Randomize the initial position of the enemy based on the chosen side
+    switch (side) {
+        case 1: // Top side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = 0;
+            break;
+        case 2: // Right side
+            enemy.x = canvas.width;
+            enemy.y = Math.random() * canvas.height;
+            break;
+        case 3: // Bottom side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = canvas.height;
+            break;
+        case 4: // Left side
+            enemy.x = 0;
+            enemy.y = Math.random() * canvas.height;
+            break;
+    }
+
     enemies.push(enemy);
 }
 
