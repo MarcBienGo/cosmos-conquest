@@ -7,6 +7,8 @@ const INITIAL_PLAYER_HEALTH = 100;
 let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 let scoreDisplay = document.getElementById("score");
+let healthDisplay = document.getElementById("health");
+
 let score = 0;
 let player = {
     x: canvas.width / 2,
@@ -120,11 +122,77 @@ function draw() {
     drawPlayer();
     drawEnemies();
     scoreDisplay.textContent = `Score: ${score}`;
+    healthDisplay.textContent = `Health: ${player.health}`;
+}
+
+// Function to detect collisions between player and enemies
+function checkCollisions() {
+    enemies.forEach((enemy, index) => {
+        // Calculate the distance between player and enemy
+        let dx = player.x - enemy.x;
+        let dy = player.y - enemy.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        // If the distance is less than the sum of the player's and enemy's radii,
+        // it means they are colliding
+        if (distance < (player.width / 2) + (enemy.width / 2)) {
+            // Reduce player's health by 2
+            player.health -= 2;
+            // Remove the enemy from the array
+            enemies.splice(index, 1);
+            
+            // Update health display
+            healthDisplay.textContent = `Health: ${player.health}`;
+
+            // Perform screen shake effect
+            screenShake();
+        }
+    });
+}
+
+   // Function to perform screen shake effect
+    function screenShake() {
+    const shakeIntensity = 5;
+    const shakeDuration = 1000; // 1 second duration
+    const shakeInterval = 1000 / 60; // 60 frames per second
+
+    let shakeStartTime = null;
+    let shakeDirection = 1;
+    let originalTransform = ctx.getTransform(); // Store the original transform
+
+    // Function to shake the screen
+    function shakeScreen(timestamp) {
+        if (!shakeStartTime) {
+            shakeStartTime = timestamp;
+        }
+
+        const elapsedTime = timestamp - shakeStartTime;
+        const progress = elapsedTime / shakeDuration;
+        const shakeAmount = shakeIntensity * (1 - progress);
+
+        if (progress < 1) {
+            if (shakeDirection === 1) {
+                ctx.translate(shakeAmount, 0);
+            } else {
+                ctx.translate(-shakeAmount, 0);
+            }
+        } else {
+            // Reset transformation matrix to original state
+            ctx.setTransform(originalTransform.a, originalTransform.b, originalTransform.c, originalTransform.d, originalTransform.e, originalTransform.f);
+            return; // Exit the function if duration is complete
+        }
+
+        requestAnimationFrame(shakeScreen);
+    }
+
+    // Start shaking the screen
+    requestAnimationFrame(shakeScreen);
 }
 
 // Main game loop
 setInterval(() => {
     moveEnemies();
+    checkCollisions(); // Check for collisions
     draw();
 }, 100);
 
