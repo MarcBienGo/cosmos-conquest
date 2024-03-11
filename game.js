@@ -1,6 +1,7 @@
 const PLAYER_SPEED = 5;
 const ENEMY_SPEED = 2;
 const SPAWN_INTERVAL = 1000; // in milliseconds
+const INITIAL_PLAYER_HEALTH = 100;
 
 
 let canvas = document.getElementById("gameCanvas");
@@ -11,7 +12,8 @@ let player = {
     x: canvas.width / 2,
     y: canvas.height - 30,
     width: 20,
-    height: 20
+    height: 20,
+    health: INITIAL_PLAYER_HEALTH
 };
 let enemies = [];
 
