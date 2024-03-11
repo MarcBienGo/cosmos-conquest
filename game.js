@@ -114,6 +114,16 @@ function drawEnemies() {
     });
 }
 
+// Function to display game over message
+function gameOver() {
+    gameRunning = false; // Stop the game loop
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+}
+
 // Main draw function
 function draw() {
     // Clear the canvas
@@ -123,6 +133,10 @@ function draw() {
     drawEnemies();
     scoreDisplay.textContent = `Score: ${score}`;
     healthDisplay.textContent = `Health: ${player.health}`;
+
+    if (player.health <= 0) {
+        gameOver();
+    }
 }
 
 // Function to detect collisions between player and enemies
@@ -137,56 +151,14 @@ function checkCollisions() {
         // it means they are colliding
         if (distance < (player.width / 2) + (enemy.width / 2)) {
             // Reduce player's health by 2
-            player.health -= 2;
+            player.health -= 50;
             // Remove the enemy from the array
             enemies.splice(index, 1);
             
             // Update health display
             healthDisplay.textContent = `Health: ${player.health}`;
-
-            // Perform screen shake effect
-            screenShake();
         }
     });
-}
-
-   // Function to perform screen shake effect
-    function screenShake() {
-    const shakeIntensity = 5;
-    const shakeDuration = 1000; // 1 second duration
-    const shakeInterval = 1000 / 60; // 60 frames per second
-
-    let shakeStartTime = null;
-    let shakeDirection = 1;
-    let originalTransform = ctx.getTransform(); // Store the original transform
-
-    // Function to shake the screen
-    function shakeScreen(timestamp) {
-        if (!shakeStartTime) {
-            shakeStartTime = timestamp;
-        }
-
-        const elapsedTime = timestamp - shakeStartTime;
-        const progress = elapsedTime / shakeDuration;
-        const shakeAmount = shakeIntensity * (1 - progress);
-
-        if (progress < 1) {
-            if (shakeDirection === 1) {
-                ctx.translate(shakeAmount, 0);
-            } else {
-                ctx.translate(-shakeAmount, 0);
-            }
-        } else {
-            // Reset transformation matrix to original state
-            ctx.setTransform(originalTransform.a, originalTransform.b, originalTransform.c, originalTransform.d, originalTransform.e, originalTransform.f);
-            return; // Exit the function if duration is complete
-        }
-
-        requestAnimationFrame(shakeScreen);
-    }
-
-    // Start shaking the screen
-    requestAnimationFrame(shakeScreen);
 }
 
 // Main game loop
