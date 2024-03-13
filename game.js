@@ -45,7 +45,8 @@ function spawnEnemy() {
         x: 0,
         y: 0,
         width: 20,
-        height: 20
+        height: 20,
+        health: 10
     };
 
     // Randomize the initial position of the enemy based on the chosen side
@@ -174,9 +175,16 @@ function checkCollisions() {
         // it means they are colliding
         if (distance < (player.width / 2) + (enemy.width / 2)) {
             // Reduce player's health by 2
-            player.health -= 50;
-            // Remove the enemy from the array
-            enemies.splice(index, 1);
+            player.health -= enemy.health;
+
+            // Reduce enemy's health
+            enemy.health -= 50;
+
+            // Remove the enemy if its health reaches zero
+            if (enemy.health <= 0) {
+                enemies.splice(index, 1);
+            }
+
 
             drawHealthBar();
 
