@@ -7,7 +7,8 @@ const INITIAL_PLAYER_HEALTH = 100;
 let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 let scoreDisplay = document.getElementById("score");
-let healthDisplay = document.getElementById("health");
+let healthCanvas = document.getElementById("healthCanvas");
+let healthCtx = healthCanvas.getContext("2d");
 
 let score = 0;
 let player = {
@@ -117,11 +118,21 @@ function drawEnemies() {
 // Function to display game over message
 function gameOver() {
     gameRunning = false; // Stop the game loop
+    enemies = [];
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = "30px Arial";
     ctx.fillStyle = "red";
     ctx.textAlign = "center";
     ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+}
+
+// Function to draw health
+function drawHealth() {
+    healthCtx.clearRect(0, 0, healthCanvas.width, healthCanvas.height);
+    healthCtx.font = "20px Arial";
+    healthCtx.fillStyle = "black";
+    healthCtx.textAlign = "center";
+    healthCtx.fillText(`Health: ${player.health}`, healthCanvas.width / 2, healthCanvas.height / 2);
 }
 
 // Main draw function
@@ -131,8 +142,7 @@ function draw() {
 
     drawPlayer();
     drawEnemies();
-    scoreDisplay.textContent = `Score: ${score}`;
-    healthDisplay.textContent = `Health: ${player.health}`;
+    drawHealth();
 
     if (player.health <= 0) {
         gameOver();
@@ -154,9 +164,11 @@ function checkCollisions() {
             player.health -= 50;
             // Remove the enemy from the array
             enemies.splice(index, 1);
-            
-            // Update health display
-            healthDisplay.textContent = `Health: ${player.health}`;
+
+            drawHealth();
+
+            if (player.health <= 0) 
+                gameOver();
         }
     });
 }
