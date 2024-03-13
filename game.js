@@ -7,8 +7,6 @@ const INITIAL_PLAYER_HEALTH = 100;
 let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 let scoreDisplay = document.getElementById("score");
-let healthCanvas = document.getElementById("healthCanvas");
-let healthCtx = healthCanvas.getContext("2d");
 
 let score = 0;
 let player = {
@@ -128,10 +126,10 @@ function gameOver() {
 
 // Function to draw health
 function drawHealthBar() {
-    const barWidth = 200;
-    const barHeight = 20;
-    const barX = (canvas.width - barWidth) / 2;
-    const barY = 10;
+    const barWidth = 40;
+    const barHeight = 5;
+    const barX = (player.x - barWidth / 2) + 9.25;
+    const barY = player.y + player.height + 5;
     const healthPercentage = player.health / INITIAL_PLAYER_HEALTH;
     const filledWidth = barWidth * healthPercentage;
 
