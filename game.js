@@ -127,12 +127,26 @@ function gameOver() {
 }
 
 // Function to draw health
-function drawHealth() {
-    healthCtx.clearRect(0, 0, healthCanvas.width, healthCanvas.height);
-    healthCtx.font = "20px Arial";
-    healthCtx.fillStyle = "black";
-    healthCtx.textAlign = "center";
-    healthCtx.fillText(`Health: ${player.health}`, healthCanvas.width / 2, healthCanvas.height / 2);
+function drawHealthBar() {
+    const barWidth = 200;
+    const barHeight = 20;
+    const barX = (canvas.width - barWidth) / 2;
+    const barY = 10;
+    const healthPercentage = player.health / INITIAL_PLAYER_HEALTH;
+    const filledWidth = barWidth * healthPercentage;
+
+    // Background of health bar
+    ctx.fillStyle = "lightgray";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    // Filled Part
+    ctx.fillStyle = "green";
+    ctx.fillRect(barX, barY, filledWidth, barHeight);
+
+    // Border of Health Bar
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+
 }
 
 // Main draw function
@@ -142,7 +156,8 @@ function draw() {
 
     drawPlayer();
     drawEnemies();
-    drawHealth();
+    drawHealthBar();
+    scoreDisplay.textContent = `Score: ${score}`;
 
     if (player.health <= 0) {
         gameOver();
@@ -165,7 +180,7 @@ function checkCollisions() {
             // Remove the enemy from the array
             enemies.splice(index, 1);
 
-            drawHealth();
+            drawHealthBar();
 
             if (player.health <= 0) 
                 gameOver();
