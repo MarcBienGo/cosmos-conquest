@@ -1,47 +1,69 @@
 const PLAYER_SPEED = 5;
-const ENEMY_SPEED = 2;
+const ENEMY_SPEED = 1;
 const SPAWN_INTERVAL = 1000; // in milliseconds
-const INITIAL_PLAYER_HEALTH = 1000000;
+const INITIAL_PLAYER_HEALTH = 10000;
 
 
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
-let scoreDisplay = document.getElementById("score");
+var canvas = document.getElementById("gameCanvas");
+var ctx = canvas.getContext("2d");
 
-let score = 0;
-let player = {
+var score = 0;
+var player = {
     x: canvas.width / 2,
-    y: canvas.height - 30,
+    y: canvas.height / 2,
     width: 20,
     height: 20,
     health: INITIAL_PLAYER_HEALTH
 };
-let enemies = [];
+var enemies = [];
+
+// Set to keep track of currently pressed keys
+let pressedKeys = new Set();
+
+// Function to handle keydown event
+function handleKeyDown(event) {
+    pressedKeys.add(event.key);
+}
+
+// Function to handle keyup event
+function handleKeyUp(event) {
+    pressedKeys.delete(event.key);
+}
+
+// Event listeners for keydown and keyup events
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
 
 // Function to move the player
-function movePlayer(event) {
-    // Update player position based on arrow key presses
-    switch (event.key) {
-        case "ArrowUp":
-            player.y -= PLAYER_SPEED;
-            break;
-        case "ArrowDown":
-            player.y += PLAYER_SPEED;
-            break;
-        case "ArrowLeft":
-            player.x -= PLAYER_SPEED;
-            break;
-        case "ArrowRight":
-            player.x += PLAYER_SPEED;
-            break;
+function movePlayer() {
+    // Reset player's movement
+    let dx = 0;
+    let dy = 0;
+
+    // Update player movement based on currently pressed keys
+    if (pressedKeys.has("ArrowUp")) {
+        dy -= PLAYER_SPEED;
     }
+    if (pressedKeys.has("ArrowDown")) {
+        dy += PLAYER_SPEED;
+    }
+    if (pressedKeys.has("ArrowLeft")) {
+        dx -= PLAYER_SPEED;
+    }
+    if (pressedKeys.has("ArrowRight")) {
+        dx += PLAYER_SPEED;
+    }
+
+    // Update player position
+    player.x += dx;
+    player.y += dy;
 }
 
 // Function to spawn enemies
 function spawnEnemy() {
     // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
-    let side = Math.floor(Math.random() * 4) + 1;
-    let enemy = {
+    var side = Math.floor(Math.random() * 4) + 1;
+    var enemy = {
         x: 0,
         y: 0,
         width: 20,
@@ -77,16 +99,16 @@ function moveEnemies() {
     enemies.forEach(enemy => {
 
         //calculates distance between player and enemy
-        let dx = player.x - enemy.x;
-        let dy = player.y - enemy.y;
+        var dx = player.x - enemy.x;
+        var dy = player.y - enemy.y;
 
         // Calculate the Euclidean distance between the enemy and the player
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        var distance = Math.sqrt(dx * dx + dy * dy);
 
         // Calculate the velocity components in the x and y directions towards the player
         // by dividing the distance by the total distance and multiplying by the enemy speed
-        let velocityX = (dx / distance) * ENEMY_SPEED;
-        let velocityY = (dy / distance) * ENEMY_SPEED;
+        var velocityX = (dx / distance) * ENEMY_SPEED;
+        var velocityY = (dy / distance) * ENEMY_SPEED;
         
         // Update the enemy's position by adding the velocity components
         enemy.x += velocityX;
@@ -156,7 +178,6 @@ function draw() {
     drawPlayer();
     drawEnemies();
     drawHealthBar();
-    scoreDisplay.textContent = `Score: ${score}`;
 
     if (player.health <= 0) {
         gameOver();
@@ -167,9 +188,9 @@ function draw() {
 function checkCollisions() {
     enemies.forEach((enemy, index) => {
         // Calculate the distance between player and enemy
-        let dx = player.x - enemy.x;
-        let dy = player.y - enemy.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        var dx = player.x - enemy.x;
+        var dy = player.y - enemy.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
 
         // If the distance is less than the sum of the player's and enemy's radii,
         // it means they are colliding
@@ -194,12 +215,17 @@ function checkCollisions() {
     });
 }
 
-// Main game loop
-setInterval(() => {
+function gameLoop() {
     moveEnemies();
-    checkCollisions(); // Check for collisions
+    checkCollisions();
     draw();
-}, 100);
+
+    // Request the next frame
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the game loop
+gameLoop();
 
 setInterval(spawnEnemy, SPAWN_INTERVAL);
 
