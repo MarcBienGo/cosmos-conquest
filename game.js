@@ -1,17 +1,20 @@
 const PLAYER_SPEED = 5;
 const ENEMY_SPEED = 2;
 const SPAWN_INTERVAL = 1000; // in milliseconds
+const INITIAL_PLAYER_HEALTH = 1000000;
 
 
 let canvas = document.getElementById("gameCanvas");
 let ctx = canvas.getContext("2d");
 let scoreDisplay = document.getElementById("score");
+
 let score = 0;
 let player = {
     x: canvas.width / 2,
     y: canvas.height - 30,
     width: 20,
-    height: 20
+    height: 20,
+    health: INITIAL_PLAYER_HEALTH
 };
 let enemies = [];
 
@@ -36,12 +39,36 @@ function movePlayer(event) {
 
 // Function to spawn enemies
 function spawnEnemy() {
+    // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
+    let side = Math.floor(Math.random() * 4) + 1;
     let enemy = {
-        x: canvas.width,
-        y: Math.random() * (canvas.height - 20),
+        x: 0,
+        y: 0,
         width: 20,
-        height: 20
+        height: 20,
+        health: 10
     };
+
+    // Randomize the initial position of the enemy based on the chosen side
+    switch (side) {
+        case 1: // Top side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = 0;
+            break;
+        case 2: // Right side
+            enemy.x = canvas.width;
+            enemy.y = Math.random() * canvas.height;
+            break;
+        case 3: // Bottom side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = canvas.height;
+            break;
+        case 4: // Left side
+            enemy.x = 0;
+            enemy.y = Math.random() * canvas.height;
+            break;
+    }
+
     enemies.push(enemy);
 }
 
@@ -87,6 +114,40 @@ function drawEnemies() {
     });
 }
 
+// Function to display game over message
+function gameOver() {
+    gameRunning = false; // Stop the game loop
+    enemies = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.font = "30px Arial";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+}
+
+// Function to draw health
+function drawHealthBar() {
+    const barWidth = 40;
+    const barHeight = 5;
+    const barX = (player.x - barWidth / 2) + 9.25;
+    const barY = player.y + player.height + 5;
+    const healthPercentage = player.health / INITIAL_PLAYER_HEALTH;
+    const filledWidth = barWidth * healthPercentage;
+
+    // Background of health bar
+    ctx.fillStyle = "lightgray";
+    ctx.fillRect(barX, barY, barWidth, barHeight);
+
+    // Filled Part
+    ctx.fillStyle = "green";
+    ctx.fillRect(barX, barY, filledWidth, barHeight);
+
+    // Border of Health Bar
+    ctx.strokeStyle = "black";
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+}
+
 // Main draw function
 function draw() {
     // Clear the canvas
@@ -94,12 +155,49 @@ function draw() {
 
     drawPlayer();
     drawEnemies();
+    drawHealthBar();
     scoreDisplay.textContent = `Score: ${score}`;
+
+    if (player.health <= 0) {
+        gameOver();
+    }
+}
+
+// Function to detect collisions between player and enemies
+function checkCollisions() {
+    enemies.forEach((enemy, index) => {
+        // Calculate the distance between player and enemy
+        let dx = player.x - enemy.x;
+        let dy = player.y - enemy.y;
+        let distance = Math.sqrt(dx * dx + dy * dy);
+
+        // If the distance is less than the sum of the player's and enemy's radii,
+        // it means they are colliding
+        if (distance < (player.width / 2) + (enemy.width / 2)) {
+            // Reduce player's health by 2
+            player.health -= enemy.health;
+
+            // Reduce enemy's health
+            enemy.health -= 50;
+
+            // Remove the enemy if its health reaches zero
+            if (enemy.health <= 0) {
+                enemies.splice(index, 1);
+            }
+
+
+            drawHealthBar();
+
+            if (player.health <= 0) 
+                gameOver();
+        }
+    });
 }
 
 // Main game loop
 setInterval(() => {
     moveEnemies();
+    checkCollisions(); // Check for collisions
     draw();
 }, 100);
 
