@@ -1,13 +1,13 @@
-const PLAYER_SPEED = 5;
+const PLAYER_SPEED = 3;
 const ENEMY_SPEED = 1;
 const SPAWN_INTERVAL = 1000; // in milliseconds
 const INITIAL_PLAYER_HEALTH = 10000;
+const LASER_SPEED = 10;
 
 
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
 
-var score = 0;
 var player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -16,13 +16,21 @@ var player = {
     health: INITIAL_PLAYER_HEALTH
 };
 var enemies = [];
+var lasers = [];
 
 // Set to keep track of currently pressed keys
 let pressedKeys = new Set();
+let mouseX = 0;
+let mouseY = 0;
+
 
 // Function to handle keydown event
 function handleKeyDown(event) {
     pressedKeys.add(event.key);
+
+    if (event.key === " ") { 
+        spawnLaser();
+    }
 }
 
 // Function to handle keyup event
@@ -33,6 +41,13 @@ function handleKeyUp(event) {
 // Event listeners for keydown and keyup events
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
+document.addEventListener("mousemove", handleMouseMove);
+
+// Function to handle mousemove event
+function handleMouseMove(event) {
+    mouseX = event.clientX - canvas.getBoundingClientRect().left;
+    mouseY = event.clientY - canvas.getBoundingClientRect().top;
+}
 
 // Function to move the player
 function movePlayer() {
@@ -177,6 +192,7 @@ function draw() {
 
     drawPlayer();
     drawEnemies();
+    drawLasers();
     drawHealthBar();
 
     if (player.health <= 0) {
@@ -184,17 +200,51 @@ function draw() {
     }
 }
 
-// Function to detect collisions between player and enemies
+function drawLasers() {
+    lasers.forEach(laser => {
+        ctx.beginPath();
+        ctx.moveTo(laser.x, laser.y);
+        ctx.lineTo(laser.x + laser.dx * LASER_SPEED * 100, laser.y + laser.dy * LASER_SPEED * 100);
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.closePath();
+    });
+}
+
+function spawnLaser() {
+    // Calculate angle between player and mouse position
+    var dx = mouseX - player.x;
+    var dy = mouseY - player.y;
+    var angle = Math.atan2(dy, dx);
+
+    // Calculate velocity components based on angle
+    var dxLaser = Math.cos(angle);
+    var dyLaser = Math.sin(angle);
+
+    // Spawn a new laser object with calculated velocity
+    var newLaser = { x: player.x + 10, y: player.y + 10, dx: dxLaser, dy: dyLaser };
+    lasers.push(newLaser);
+    
+    // Remove the laser after 1 second
+    setTimeout(() => {
+        var index = lasers.indexOf(newLaser);
+        if (index !== -1) {
+            lasers.splice(index, 1);
+        }
+    }, 1000);
+}
+
 function checkCollisions() {
-    enemies.forEach((enemy, index) => {
+    enemies.forEach((enemy, enemyIndex) => {
         // Calculate the distance between player and enemy
-        var dx = player.x - enemy.x;
-        var dy = player.y - enemy.y;
-        var distance = Math.sqrt(dx * dx + dy * dy);
+        var dxPlayerEnemy = player.x - enemy.x;
+        var dyPlayerEnemy = player.y - enemy.y;
+        var distancePlayerEnemy = Math.sqrt(dxPlayerEnemy * dxPlayerEnemy + dyPlayerEnemy * dyPlayerEnemy);
 
         // If the distance is less than the sum of the player's and enemy's radii,
         // it means they are colliding
-        if (distance < (player.width / 2) + (enemy.width / 2)) {
+        if (distancePlayerEnemy < (player.width / 2) + (enemy.width / 2)) {
             // Reduce player's health by 2
             player.health -= enemy.health;
 
@@ -203,24 +253,56 @@ function checkCollisions() {
 
             // Remove the enemy if its health reaches zero
             if (enemy.health <= 0) {
-                enemies.splice(index, 1);
+                enemies.splice(enemyIndex, 1);
             }
-
 
             drawHealthBar();
 
-            if (player.health <= 0) 
+            if (player.health <= 0)
                 gameOver();
         }
+
+        lasers.forEach((laser, laserIndex) => {
+            // Calculate the distance between the enemy's center and each point along the laser's path
+            var dxEnemyCenter;
+            var dyEnemyCenter;
+            var distanceEnemyCenterLaserEnd;
+
+            for (let i = 0; i <= LASER_SPEED * 100; i++) {
+                dxEnemyCenter = enemy.x + enemy.width / 2 - (laser.x + i * laser.dx);
+                dyEnemyCenter = enemy.y + enemy.height / 2 - (laser.y + i * laser.dy);
+                distanceEnemyCenterLaserEnd = Math.sqrt(dxEnemyCenter * dxEnemyCenter + dyEnemyCenter * dyEnemyCenter);
+
+                // If the distance is less than the sum of the enemy's width and half the laser's width, it means the enemy is hit
+                if (distanceEnemyCenterLaserEnd < enemy.width / 2 + 1) {
+                    // Reduce enemy's health by 50
+                    enemy.health -= 50;
+
+                    // Remove the enemy if its health reaches zero
+                    if (enemy.health <= 0) {
+                        enemies.splice(enemyIndex, 1);
+                    }
+
+                    // Remove the laser
+                    lasers.splice(laserIndex, 1);
+
+                    // Display message in console
+                    console.log("Enemy hit!");
+                    break; // Break the loop if the enemy is hit
+                }
+            }
+        });
     });
 }
 
+
+
+
 function gameLoop() {
+    movePlayer();
     moveEnemies();
     checkCollisions();
     draw();
-
-    // Request the next frame
     requestAnimationFrame(gameLoop);
 }
 
