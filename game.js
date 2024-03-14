@@ -72,6 +72,20 @@ function movePlayer() {
     // Update player position
     player.x += dx;
     player.y += dy;
+
+    // Ensure the player stays within the canvas boundaries
+    if (player.x < 0) {
+        player.x = 0;
+    }
+    if (player.x > canvas.width - player.width) {
+        player.x = canvas.width - player.width;
+    }
+    if (player.y < 0) {
+        player.y = 0;
+    }
+    if (player.y > canvas.height - player.height) {
+        player.y = canvas.height - player.height;
+    }
 }
 
 // Function to spawn enemies
@@ -232,7 +246,7 @@ function spawnLaser() {
         if (index !== -1) {
             lasers.splice(index, 1);
         }
-    }, 1000);
+    }, 100);
 }
 
 function checkCollisions() {
