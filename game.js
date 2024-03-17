@@ -1,7 +1,7 @@
 const PLAYER_SPEED = 3;
 const ENEMY_SPEED = 1;
 const SPAWN_INTERVAL = 1000; // in milliseconds
-const INITIAL_PLAYER_HEALTH = 10000;
+const INITIAL_PLAYER_HEALTH = 100;
 const LASER_SPEED = 10;
 
 
