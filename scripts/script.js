@@ -1,87 +1,50 @@
-const PLAYER_SPEED = 5;
-const ENEMY_SPEED = 2;
+const PLAYER_SPEED = 3;
+const ENEMY_SPEED = 1;
 const SPAWN_INTERVAL = 1000; // in milliseconds
-const INITIAL_PLAYER_HEALTH = 1000000;
+const INITIAL_PLAYER_HEALTH = 100;
+const LASER_SPEED = 10;
 
 
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
-canvas.width = 310;
-canvas.height = 290;
-//let scoreDisplay = document.getElementById("score");
+var canvas = document.getElementById("gameCanvas");
+var ctx = canvas.getContext("2d");
 
-let score = 0;
-let player = {
+var player = {
     x: canvas.width / 2,
-    y: canvas.height - 30,
-    prevX: canvas.width / 2,
-    prevY: canvas.height - 30,
+    y: canvas.height / 2,
     width: 20,
     height: 20,
     health: INITIAL_PLAYER_HEALTH
 };
-let enemies = [];
+var enemies = [];
+var lasers = [];
 
-// Function to move the player
-function movePlayer(event) {
-    // Update player position based on arrow key presses
-    var element;
-    var xOffset = player.x;
-    var yOffset = player.y;
+// Set to keep track of currently pressed keys
+let pressedKeys = new Set();
+let mouseX = 0;
+let mouseY = 0;
 
+
+// Function to handle keydown event
+function handleKeyDown(event) {
     if(event.code == "ArrowUp" || event.code == "KeyW"){
-        player.prevY = player.y;
         element = document.getElementsByClassName("up")[0];
         element.style.background = "linear-gradient(to top, #565e6a 0%, #333 100%)";
-        player.y -= PLAYER_SPEED;
     }else if(event.code == "ArrowDown" || event.code == "KeyS"){
-        player.prevY = player.y;
         element = document.getElementsByClassName("down")[0];
         element.style.background = "linear-gradient(to bottom, #565e6a 0%, #333 100%)";
-        player.y += PLAYER_SPEED;
     }else if(event.code == "ArrowLeft" || event.code == "KeyA"){
-        player.prevX = player.x;
         element = document.getElementsByClassName("left")[0];
         element.style.background = "linear-gradient(to left, #565e6a 0%, #333 100%)";
-        player.x -= PLAYER_SPEED;
     }else if(event.code == "ArrowRight" || event.code == "KeyD"){
-        player.prevX = player.x;
         element = document.getElementsByClassName("right")[0];
         element.style.background = "linear-gradient(to right, #565e6a 0%, #333 100%)";
-        player.x += PLAYER_SPEED;
-    }else if(event.code == "Space"){
-        event.preventDefault();
-        element = document.getElementsByClassName("a")[0];
-        element.style.boxShadow = "-1px 1px 1px black, 0px 0px 5px black inset";
-        element.style.borderWidth = "0px";
-        element.style.lineHeight = "75px";
     }
 
-    if(player.x < player.prevX){
-        xOffset = player.x - (player.width / 2);
-    }else{
-        xOffset = player.x + (player.width / 2);
-    }
-
-    if(player.y < player.prevY){
-        yOffset = player.y - (player.height / 2);
-    }else{
-        yOffset = player.y + (player.height / 2);
-    }
-
-    if(xOffset > 0 && xOffset < (canvas.width - 15) && yOffset > 0 && yOffset < (canvas.height - 15)){
-        player.prevX = player.x;
-        player.prevY = player.y;
-    }else{
-        player.x = player.prevX;
-        player.y = player.prevY;
-    }
-
-    console.log(xOffset + " " + yOffset);
+    pressedKeys.add(event.key);
 }
 
-function liftButton(event) {
-    //Animate control pad
+// Function to handle keyup event
+function handleKeyUp(event) {
     var element;
     if(event.code == "ArrowUp" || event.code == "KeyW"){
         element = document.getElementsByClassName("up")[0];
@@ -102,13 +65,84 @@ function liftButton(event) {
         element.style.borderWidth = "";
         element.style.lineHeight = "70px";
     }
+
+    pressedKeys.delete(event.key);
+}
+
+function leftClickDown(event){
+    var element;
+    element = document.getElementsByClassName("a")[0];
+    element.style.boxShadow = "-1px 1px 1px black, 0px 0px 5px black inset";
+    element.style.borderWidth = "0px";
+    element.style.lineHeight = "75px";
+    spawnLaser();
+}
+
+function leftClickUp(event){
+    var element;
+    element = document.getElementsByClassName("a")[0];
+    element.style.boxShadow = "-1px 1px 5px black, 0px 0px 5px black inset";
+    element.style.borderWidth = "";
+    element.style.lineHeight = "70px";
+}
+
+// Event listeners for keydown and keyup events
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keyup", handleKeyUp);
+document.addEventListener("mousemove", handleMouseMove);
+document.addEventListener("mousedown", leftClickDown);
+document.addEventListener("mouseup", leftClickUp);
+
+// Function to handle mousemove event
+function handleMouseMove(event) {
+    mouseX = event.clientX - canvas.getBoundingClientRect().left;
+    mouseY = event.clientY - canvas.getBoundingClientRect().top;
+}
+
+// Function to move the player
+function movePlayer() {
+// Reset player's movement
+let dx = 0;
+let dy = 0;
+
+// Update player movement based on currently pressed keys (WASD)
+if (pressedKeys.has("w") || pressedKeys.has("W")) {
+    dy -= PLAYER_SPEED; // Move up
+}
+if (pressedKeys.has("s") || pressedKeys.has("S")) {
+    dy += PLAYER_SPEED; // Move down
+}
+if (pressedKeys.has("a") || pressedKeys.has("A")) {
+    dx -= PLAYER_SPEED; // Move left
+}
+if (pressedKeys.has("d") || pressedKeys.has("D")) {
+    dx += PLAYER_SPEED; // Move right
+}
+
+// Update player position
+player.x += dx;
+player.y += dy;
+
+// Ensure the player stays within the canvas boundaries
+if (player.x < 0) {
+    player.x = 0;
+}
+if (player.x > canvas.width - player.width) {
+    player.x = canvas.width - player.width;
+}
+if (player.y < 0) {
+    player.y = 0;
+}
+if (player.y > canvas.height - player.height) {
+    player.y = canvas.height - player.height;
+}
 }
 
 // Function to spawn enemies
 function spawnEnemy() {
     // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
-    let side = Math.floor(Math.random() * 4) + 1;
-    let enemy = {
+    var side = Math.floor(Math.random() * 4) + 1;
+    var enemy = {
         x: 0,
         y: 0,
         width: 20,
@@ -144,16 +178,16 @@ function moveEnemies() {
     enemies.forEach(enemy => {
 
         //calculates distance between player and enemy
-        let dx = player.x - enemy.x;
-        let dy = player.y - enemy.y;
+        var dx = player.x - enemy.x;
+        var dy = player.y - enemy.y;
 
         // Calculate the Euclidean distance between the enemy and the player
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        var distance = Math.sqrt(dx * dx + dy * dy);
 
         // Calculate the velocity components in the x and y directions towards the player
         // by dividing the distance by the total distance and multiplying by the enemy speed
-        let velocityX = (dx / distance) * ENEMY_SPEED;
-        let velocityY = (dy / distance) * ENEMY_SPEED;
+        var velocityX = (dx / distance) * ENEMY_SPEED;
+        var velocityY = (dy / distance) * ENEMY_SPEED;
         
         // Update the enemy's position by adding the velocity components
         enemy.x += velocityX;
@@ -164,8 +198,8 @@ function moveEnemies() {
 // Function to draw player
 function drawPlayer() {
     ctx.beginPath();
-    ctx.fillStyle = "blue";
     ctx.rect(player.x, player.y, player.width, player.height);
+    ctx.fillStyle = "blue";
     ctx.fill();
     ctx.closePath();
 }
@@ -222,25 +256,59 @@ function draw() {
 
     drawPlayer();
     drawEnemies();
+    drawLasers();
     drawHealthBar();
-    //scoreDisplay.textContent = `Score: ${score}`;
 
     if (player.health <= 0) {
         gameOver();
     }
 }
 
-// Function to detect collisions between player and enemies
+function drawLasers() {
+    lasers.forEach(laser => {
+        ctx.beginPath();
+        ctx.moveTo(laser.x, laser.y);
+        ctx.lineTo(laser.x + laser.dx * LASER_SPEED * 100, laser.y + laser.dy * LASER_SPEED * 100);
+        ctx.strokeStyle = "yellow";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.closePath();
+    });
+}
+
+function spawnLaser() {
+    // Calculate angle between player and mouse position
+    var dx = mouseX - player.x;
+    var dy = mouseY - player.y;
+    var angle = Math.atan2(dy, dx);
+
+    // Calculate velocity components based on angle
+    var dxLaser = Math.cos(angle);
+    var dyLaser = Math.sin(angle);
+
+    // Spawn a new laser object with calculated velocity
+    var newLaser = { x: player.x + 10, y: player.y + 10, dx: dxLaser, dy: dyLaser };
+    lasers.push(newLaser);
+    
+    // Remove the laser after 1 second
+    setTimeout(() => {
+        var index = lasers.indexOf(newLaser);
+        if (index !== -1) {
+            lasers.splice(index, 1);
+        }
+    }, 100);
+}
+
 function checkCollisions() {
-    enemies.forEach((enemy, index) => {
+    enemies.forEach((enemy, enemyIndex) => {
         // Calculate the distance between player and enemy
-        let dx = player.x - enemy.x;
-        let dy = player.y - enemy.y;
-        let distance = Math.sqrt(dx * dx + dy * dy);
+        var dxPlayerEnemy = player.x - enemy.x;
+        var dyPlayerEnemy = player.y - enemy.y;
+        var distancePlayerEnemy = Math.sqrt(dxPlayerEnemy * dxPlayerEnemy + dyPlayerEnemy * dyPlayerEnemy);
 
         // If the distance is less than the sum of the player's and enemy's radii,
         // it means they are colliding
-        if (distance < (player.width / 2) + (enemy.width / 2)) {
+        if (distancePlayerEnemy < (player.width / 2) + (enemy.width / 2)) {
             // Reduce player's health by 2
             player.health -= enemy.health;
 
@@ -249,27 +317,63 @@ function checkCollisions() {
 
             // Remove the enemy if its health reaches zero
             if (enemy.health <= 0) {
-                enemies.splice(index, 1);
+                enemies.splice(enemyIndex, 1);
             }
-
 
             drawHealthBar();
 
-            if (player.health <= 0) 
+            if (player.health <= 0)
                 gameOver();
         }
+
+        lasers.forEach((laser, laserIndex) => {
+            // Calculate the distance between the enemy's center and each point along the laser's path
+            var dxEnemyCenter;
+            var dyEnemyCenter;
+            var distanceEnemyCenterLaserEnd;
+
+            for (let i = 0; i <= LASER_SPEED * 100; i++) {
+                dxEnemyCenter = enemy.x + enemy.width / 2 - (laser.x + i * laser.dx);
+                dyEnemyCenter = enemy.y + enemy.height / 2 - (laser.y + i * laser.dy);
+                distanceEnemyCenterLaserEnd = Math.sqrt(dxEnemyCenter * dxEnemyCenter + dyEnemyCenter * dyEnemyCenter);
+
+                // If the distance is less than the sum of the enemy's width and half the laser's width, it means the enemy is hit
+                if (distanceEnemyCenterLaserEnd < enemy.width / 2 + 1) {
+                    // Reduce enemy's health by 50
+                    enemy.health -= 50;
+
+                    // Remove the enemy if its health reaches zero
+                    if (enemy.health <= 0) {
+                        enemies.splice(enemyIndex, 1);
+                    }
+
+                    // Remove the laser
+                    lasers.splice(laserIndex, 1);
+
+                    // Display message in console
+                    console.log("Enemy hit!");
+                    break; // Break the loop if the enemy is hit
+                }
+            }
+        });
     });
 }
 
-// Main game loop
-setInterval(() => {
+
+
+
+function gameLoop() {
+    movePlayer();
     moveEnemies();
-    checkCollisions(); // Check for collisions
+    checkCollisions();
     draw();
-}, 100);
+    requestAnimationFrame(gameLoop);
+}
+
+// Start the game loop
+gameLoop();
 
 setInterval(spawnEnemy, SPAWN_INTERVAL);
 
 // Event listener for player movement
 document.addEventListener("keydown", movePlayer);
-document.addEventListener("keyup", liftButton);
