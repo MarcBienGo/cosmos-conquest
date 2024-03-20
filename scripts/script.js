@@ -307,7 +307,7 @@ function spawnLaser() {
     
     // Remove the laser after 1 second
     setTimeout(() => {
-        var index = lasers.indexOf(newLaser);
+        var index = lasers.indexOf(newLaser);asd
         if (index !== -1) {
             lasers.splice(index, 1);
         }
