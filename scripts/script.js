@@ -1,6 +1,6 @@
 const PLAYER_SPEED = 3;
 const ENEMY_SPEED = 1;
-const SPAWN_INTERVAL = 1000; // in milliseconds
+var SPAWN_INTERVAL = 1000; // in milliseconds
 const INITIAL_PLAYER_HEALTH = 100;
 const LASER_SPEED = 10;
 
@@ -22,6 +22,13 @@ var lasers = [];
 let pressedKeys = new Set();
 let mouseX = 0;
 let mouseY = 0;
+
+//Variable to track score
+var score = 0;
+var scoreIncrement = 10;
+
+// Define a variable to track the elapsed time
+var elapsedTime = 0;
 
 
 // Function to handle keydown event
@@ -89,9 +96,16 @@ function leftClickUp(event){
 // Event listeners for keydown and keyup events
 document.addEventListener("keydown", handleKeyDown);
 document.addEventListener("keyup", handleKeyUp);
+
+//Event listener for mouse position tracking
 document.addEventListener("mousemove", handleMouseMove);
+
+//Event listeners for mouse click events
 document.addEventListener("mousedown", leftClickDown);
 document.addEventListener("mouseup", leftClickUp);
+
+// Event listener for player movement
+document.addEventListener("keydown", movePlayer);
 
 // Function to handle mousemove event
 function handleMouseMove(event) {
@@ -258,6 +272,7 @@ function draw() {
     drawEnemies();
     drawLasers();
     drawHealthBar();
+    drawScore();
 
     if (player.health <= 0) {
         gameOver();
@@ -299,6 +314,19 @@ function spawnLaser() {
     }, 100);
 }
 
+// Function to update score
+function updateScore() {
+    score += scoreIncrement;
+}
+
+// Function to display score
+function drawScore() {
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "white";
+    ctx.fillText("Score: " + score, 10, 30); 
+}
+
+//Function to check if enemy has damaged player
 function checkCollisions() {
     enemies.forEach((enemy, enemyIndex) => {
         // Calculate the distance between player and enemy
@@ -317,6 +345,7 @@ function checkCollisions() {
 
             // Remove the enemy if its health reaches zero
             if (enemy.health <= 0) {
+                updateScore();
                 enemies.splice(enemyIndex, 1);
             }
 
@@ -344,6 +373,7 @@ function checkCollisions() {
 
                     // Remove the enemy if its health reaches zero
                     if (enemy.health <= 0) {
+                        updateScore();
                         enemies.splice(enemyIndex, 1);
                     }
 
@@ -360,6 +390,15 @@ function checkCollisions() {
 }
 
 
+//Function to increase difficulty at set intervals
+function increaseSpawnRate() {
+    elapsedTime += 1000;
+    if (elapsedTime >= 5000) {
+        scoreIncrement++;
+        SPAWN_INTERVAL -= 100; 
+        elapsedTime = 0; 
+    }
+}
 
 
 function gameLoop() {
@@ -374,6 +413,4 @@ function gameLoop() {
 gameLoop();
 
 setInterval(spawnEnemy, SPAWN_INTERVAL);
-
-// Event listener for player movement
-document.addEventListener("keydown", movePlayer);
+setInterval(increaseSpawnRate, 1000);
