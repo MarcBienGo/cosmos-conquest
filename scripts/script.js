@@ -378,7 +378,7 @@ function checkCollisions() {
                     }
 
                     // Remove the laser
-                    lasers.splice(laserIndex, 1);
+                    //lasers.splice(laserIndex, 1);
 
                     // Display message in console
                     console.log("Enemy hit!");
