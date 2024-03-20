@@ -414,3 +414,7 @@ gameLoop();
 
 setInterval(spawnEnemy, SPAWN_INTERVAL);
 setInterval(increaseSpawnRate, 1000);
+
+
+
+
