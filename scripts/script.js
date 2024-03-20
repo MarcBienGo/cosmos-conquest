@@ -393,7 +393,7 @@ function checkCollisions() {
 //Function to increase difficulty at set intervals
 function increaseSpawnRate() {
     elapsedTime += 1000;
-    if (elapsedTime >= 5000) {
+    if (elapsedTime >= 45000) {
         scoreIncrement++;
         SPAWN_INTERVAL -= 100; 
         elapsedTime = 0; 
