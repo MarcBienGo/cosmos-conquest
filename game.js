@@ -1,9 +1,14 @@
     const PLAYER_SPEED = 3;
     const ENEMY_SPEED = 1;
-    const SPAWN_INTERVAL = 1000; // in milliseconds
+    var SPAWN_INTERVAL = 1000; // in milliseconds
     const INITIAL_PLAYER_HEALTH = 100;
     const LASER_SPEED = 10;
 
+
+    var score = 0;
+
+    // Define a variable to track the elapsed time
+    var elapsedTime = 0;
 
     var canvas = document.getElementById("gameCanvas");
     var ctx = canvas.getContext("2d");
@@ -19,9 +24,9 @@
     var lasers = [];
 
     // Set to keep track of currently pressed keys
-    let pressedKeys = new Set();
-    let mouseX = 0;
-    let mouseY = 0;
+    var pressedKeys = new Set();
+    var mouseX = 0;
+    var mouseY = 0;
 
 
     // Function to handle keydown event
@@ -51,43 +56,43 @@
     }
 
     // Function to move the player
-function movePlayer() {
-    // Reset player's movement
-    let dx = 0;
-    let dy = 0;
+    function movePlayer() {
+        // Reset player's movement
+        let dx = 0;
+        let dy = 0;
 
-    // Update player movement based on currently pressed keys (WASD)
-    if (pressedKeys.has("w") || pressedKeys.has("W")) {
-        dy -= PLAYER_SPEED; // Move up
-    }
-    if (pressedKeys.has("s") || pressedKeys.has("S")) {
-        dy += PLAYER_SPEED; // Move down
-    }
-    if (pressedKeys.has("a") || pressedKeys.has("A")) {
-        dx -= PLAYER_SPEED; // Move left
-    }
-    if (pressedKeys.has("d") || pressedKeys.has("D")) {
-        dx += PLAYER_SPEED; // Move right
-    }
+        // Update player movement based on currently pressed keys (WASD)
+        if (pressedKeys.has("w") || pressedKeys.has("W")) {
+            dy -= PLAYER_SPEED; // Move up
+        }
+        if (pressedKeys.has("s") || pressedKeys.has("S")) {
+            dy += PLAYER_SPEED; // Move down
+        }
+        if (pressedKeys.has("a") || pressedKeys.has("A")) {
+            dx -= PLAYER_SPEED; // Move left
+        }
+        if (pressedKeys.has("d") || pressedKeys.has("D")) {
+            dx += PLAYER_SPEED; // Move right
+        }
 
-    // Update player position
-    player.x += dx;
-    player.y += dy;
+        // Update player position
+        player.x += dx;
+        player.y += dy;
 
-    // Ensure the player stays within the canvas boundaries
-    if (player.x < 0) {
-        player.x = 0;
+        // Ensure the player stays within the canvas boundaries
+        if (player.x < 0) {
+            player.x = 0;
+        }
+        if (player.x > canvas.width - player.width) {
+            player.x = canvas.width - player.width;
+        }
+        if (player.y < 0) {
+            player.y = 0;
+        }
+        if (player.y > canvas.height - player.height) {
+            player.y = canvas.height - player.height;
+        }
     }
-    if (player.x > canvas.width - player.width) {
-        player.x = canvas.width - player.width;
-    }
-    if (player.y < 0) {
-        player.y = 0;
-    }
-    if (player.y > canvas.height - player.height) {
-        player.y = canvas.height - player.height;
-    }
-}
 
     // Function to spawn enemies
     function spawnEnemy() {
@@ -209,6 +214,7 @@ function movePlayer() {
         drawEnemies();
         drawLasers();
         drawHealthBar();
+        drawScore();
 
         if (player.health <= 0) {
             gameOver();
@@ -250,6 +256,18 @@ function movePlayer() {
         }, 100);
     }
 
+    // Function to update score
+    function updateScore() {
+        score += 10;
+    }
+
+    // Function to display score
+    function drawScore() {
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "white";
+        ctx.fillText("Score: " + score, 10, 30); 
+    }
+
     function checkCollisions() {
         enemies.forEach((enemy, enemyIndex) => {
             // Calculate the distance between player and enemy
@@ -268,6 +286,7 @@ function movePlayer() {
 
                 // Remove the enemy if its health reaches zero
                 if (enemy.health <= 0) {
+                    updateScore();
                     enemies.splice(enemyIndex, 1);
                 }
 
@@ -290,11 +309,14 @@ function movePlayer() {
 
                     // If the distance is less than the sum of the enemy's width and half the laser's width, it means the enemy is hit
                     if (distanceEnemyCenterLaserEnd < enemy.width / 2 + 1) {
+
+
                         // Reduce enemy's health by 50
                         enemy.health -= 50;
 
                         // Remove the enemy if its health reaches zero
                         if (enemy.health <= 0) {
+                            updateScore();
                             enemies.splice(enemyIndex, 1);
                         }
 
@@ -310,7 +332,14 @@ function movePlayer() {
         });
     }
 
-
+    // Function to increase spawn rate over time
+    function increaseSpawnRate() {
+        elapsedTime += SPAWN_INTERVAL;
+        if (elapsedTime >= 45000) { 
+            SPAWN_INTERVAL -= 250; 
+            elapsedTime = 0; 
+        }
+    }
 
 
     function gameLoop() {
@@ -318,6 +347,7 @@ function movePlayer() {
         moveEnemies();
         checkCollisions();
         draw();
+        increaseSpawnRate();
         requestAnimationFrame(gameLoop);
     }
 
