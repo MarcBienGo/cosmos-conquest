@@ -1,6 +1,6 @@
-#gameCanvas {
-    background-image: url('../images/Background.jpg');
-    background-size: cover; 
+.display-container {
+  background-image: url("../images/background.gif");
+  background-size: 310px 290px;
 }
 
 .gameboy {
@@ -105,7 +105,7 @@
     }
     
     .display {
-      background-color:#929d97;
+      
       height:290px;
       width:310px;
       border-radius:3px;
