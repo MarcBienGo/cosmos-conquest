@@ -1,7 +1,7 @@
 const PLAYER_SPEED = 3;
 const ENEMY_SPEED = 1;
 var SPAWN_INTERVAL = 1000; // in milliseconds
-const INITIAL_PLAYER_HEALTH = 100;
+const INITIAL_PLAYER_HEALTH = 200;
 const LASER_SPEED = 10;
 
 
@@ -17,6 +17,7 @@ var player = {
 };
 var enemies = [];
 var lasers = [];
+var hps = [];
 
 // Set to keep track of currently pressed keys
 let pressedKeys = new Set();
@@ -25,7 +26,8 @@ let mouseY = 0;
 
 //Variable to track score
 var score = 0;
-var scoreIncrement = 10;
+var scoreIncrement = 1;
+var bossScoreIncrement = 100;
 
 // Define a variable to track the elapsed time
 var elapsedTime = 0;
@@ -167,7 +169,11 @@ function spawnEnemy() {
         y: 0,
         width: 20,
         height: 20,
-        health: 10
+        health: 10,
+        damage: 5,
+        points: 10,
+        type: "mob",
+        speed: 1
     };
 
     if(rng == 0){
@@ -180,6 +186,61 @@ function spawnEnemy() {
         enemy.img = "images/enemy-4.png";
     }
     
+
+    // Randomize the initial position of the enemy based on the chosen side
+    switch (side) {
+        case 1: // Top side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = 0;
+            break;
+        case 2: // Right side
+            enemy.x = canvas.width;
+            enemy.y = Math.random() * canvas.height;
+            break;
+        case 3: // Bottom side
+            enemy.x = Math.random() * canvas.width;
+            enemy.y = canvas.height;
+            break;
+        case 4: // Left side
+            enemy.x = 0;
+            enemy.y = Math.random() * canvas.height;
+            break;
+    }
+
+    enemies.push(enemy);
+}
+
+function spawnHp() {
+    var hpDrop = {
+        value: 30,
+        img: "images/hp.png",
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        width: 20,
+        height: 20
+    };
+
+    console.log(hpDrop.x, hpDrop.y);
+
+    hps.push(hpDrop);
+}
+
+function spawnBoss() {
+    // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
+    var side = Math.floor(Math.random() * 4) + 1;
+
+    var enemy = {
+        x: 0,
+        y: 0,
+        width: 60,
+        height: 60,
+        health: 1000,
+        damage: 5,
+        points: 100,
+        type: "boss",
+        img: "images/boss.png",
+        speed: 0.5
+    };    
 
     // Randomize the initial position of the enemy based on the chosen side
     switch (side) {
@@ -217,8 +278,8 @@ function moveEnemies() {
 
         // Calculate the velocity components in the x and y directions towards the player
         // by dividing the distance by the total distance and multiplying by the enemy speed
-        var velocityX = (dx / distance) * ENEMY_SPEED;
-        var velocityY = (dy / distance) * ENEMY_SPEED;
+        var velocityX = (dx / distance) * enemy.speed;
+        var velocityY = (dy / distance) * enemy.speed;
         
         // Update the enemy's position by adding the velocity components
         enemy.x += velocityX;
@@ -255,6 +316,14 @@ function drawEnemies() {
         enemyImage.src = enemy.img;
 
         ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
+    });
+}
+
+function drawHpDrop() {
+    hps.forEach(hp => {
+        var hpImage = new Image();
+        hpImage.src = hp.img;
+        ctx.drawImage(hpImage, hp.x, hp.y, hp.width, hp.height);
     });
 }
 
@@ -300,6 +369,7 @@ function draw() {
     drawPlayer();
     drawEnemies();
     drawLasers();
+    drawHpDrop();
     drawHealthBar();
     drawScore();
 
@@ -344,8 +414,13 @@ function spawnLaser() {
 }
 
 // Function to update score
-function updateScore() {
-    score += scoreIncrement;
+function updateScore(enemyType) {
+    console.log(enemyType)
+    if(enemyType == "mob"){
+        score += scoreIncrement;
+    }else{
+        score += bossScoreIncrement;
+    }
 }
 
 // Function to display score
@@ -367,14 +442,14 @@ function checkCollisions() {
         // it means they are colliding
         if (distancePlayerEnemy < (player.width / 2) + (enemy.width / 2)) {
             // Reduce player's health by 2
-            player.health -= enemy.health;
+            player.health -= enemy.damage;
 
             // Reduce enemy's health
             enemy.health -= 50;
 
             // Remove the enemy if its health reaches zero
             if (enemy.health <= 0) {
-                updateScore();
+                updateScore(enemy.type);
                 enemies.splice(enemyIndex, 1);
             }
 
@@ -398,23 +473,40 @@ function checkCollisions() {
                 // If the distance is less than the sum of the enemy's width and half the laser's width, it means the enemy is hit
                 if (distanceEnemyCenterLaserEnd < enemy.width / 2 + 1) {
                     // Reduce enemy's health by 50
-                    enemy.health -= 50;
-
+                    enemy.health -= 10;
                     // Remove the enemy if its health reaches zero
                     if (enemy.health <= 0) {
-                        updateScore();
+                        updateScore(enemy.type);
                         enemies.splice(enemyIndex, 1);
                     }
 
-                    // Remove the laser
-                    //lasers.splice(laserIndex, 1);
-
-                    // Display message in console
-                    console.log("Enemy hit!");
                     break; // Break the loop if the enemy is hit
                 }
             }
         });
+    });
+
+    hps.forEach((hp, hpIndex) => {
+        // Calculate the distance between player and health drop
+        var dxPlayerDrop = player.x - hp.x;
+        var dyPlayerDrop = player.y - hp.y;
+        var distancePlayerDrop = Math.sqrt(dxPlayerDrop * dxPlayerDrop + dyPlayerDrop * dyPlayerDrop);
+
+        // If the distance is less than the sum of the player's and enemy's radii,
+        // it means they are colliding
+        if (distancePlayerDrop < (player.width / 2) + (hp.width / 2)) {
+            // Reduce player's health by 2
+            player.health += hp.value;
+
+            if(player.health > INITIAL_PLAYER_HEALTH){
+                player.health = INITIAL_PLAYER_HEALTH;
+            }
+
+            // Remove the drop
+            hps.splice(hpIndex, 1);
+
+            drawHealthBar();
+        }
     });
 }
 
@@ -422,9 +514,13 @@ function checkCollisions() {
 //Function to increase difficulty at set intervals
 function increaseSpawnRate() {
     elapsedTime += 1000;
-    if (elapsedTime >= 45000) {
+    if (elapsedTime >= 30000) {
+        spawnBoss();    
         scoreIncrement++;
-        SPAWN_INTERVAL -= 100; 
+        bossScoreIncrement += 10;
+        SPAWN_INTERVAL -= 100;
+        clearInterval(spawnEnemy);
+        setInterval(spawnEnemy, SPAWN_INTERVAL);
         elapsedTime = 0; 
     }
 }
@@ -442,4 +538,5 @@ function gameLoop() {
 gameLoop();
 
 setInterval(spawnEnemy, SPAWN_INTERVAL);
+setInterval(spawnHp, 30000);
 setInterval(increaseSpawnRate, 1000);
