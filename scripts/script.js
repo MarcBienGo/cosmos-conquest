@@ -111,6 +111,10 @@ document.addEventListener("keydown", movePlayer);
 function handleMouseMove(event) {
     mouseX = event.clientX - canvas.getBoundingClientRect().left;
     mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+    var dx = mouseX - player.x;
+    var dy = mouseY - player.y;
+    player.angle = Math.atan2(dy, dx);
 }
 
 // Function to move the player
@@ -156,6 +160,8 @@ if (player.y > canvas.height - player.height) {
 function spawnEnemy() {
     // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
     var side = Math.floor(Math.random() * 4) + 1;
+    var rng = Math.floor(Math.random() * 3);
+
     var enemy = {
         x: 0,
         y: 0,
@@ -163,6 +169,17 @@ function spawnEnemy() {
         height: 20,
         health: 10
     };
+
+    if(rng == 0){
+        enemy.img = "images/enemy-1.png";
+    }else if(rng == 1){
+        enemy.img = "images/enemy-2.png";
+    }else if(rng == 2){
+        enemy.img = "images/enemy-3.png";
+    }else{
+        enemy.img = "images/enemy-4.png";
+    }
+    
 
     // Randomize the initial position of the enemy based on the chosen side
     switch (side) {
@@ -211,21 +228,33 @@ function moveEnemies() {
 
 // Function to draw player
 function drawPlayer() {
-    ctx.beginPath();
-    ctx.rect(player.x, player.y, player.width, player.height);
-    ctx.fillStyle = "blue";
-    ctx.fill();
-    ctx.closePath();
+    var heroImage = new Image();
+    heroImage.src = "images/player.png";
+
+    // Save the current canvas state
+    ctx.save();
+    
+    // Translate to the player's position
+    ctx.translate(player.x + player.width / 2, player.y + player.height / 2);
+    
+    // Rotate the canvas to the calculated angle
+    ctx.rotate(player.angle);
+    
+    // Draw the player image (rotated)
+    ctx.drawImage(heroImage, -player.width / 2, -player.height / 2, player.width, player.height);
+    
+    // Restore the canvas state
+    ctx.restore();
 }
 
 // Function to draw enemies
 function drawEnemies() {
     enemies.forEach(enemy => {
-        ctx.beginPath();
-        ctx.rect(enemy.x, enemy.y, enemy.width, enemy.height);
-        ctx.fillStyle = "red";
-        ctx.fill();
-        ctx.closePath();
+        var rng = Math.floor(Math.random() * 2);
+        var enemyImage = new Image();
+        enemyImage.src = enemy.img;
+
+        ctx.drawImage(enemyImage, enemy.x, enemy.y, enemy.width, enemy.height);
     });
 }
 
@@ -378,7 +407,7 @@ function checkCollisions() {
                     }
 
                     // Remove the laser
-                    lasers.splice(laserIndex, 1);
+                    //lasers.splice(laserIndex, 1);
 
                     // Display message in console
                     console.log("Enemy hit!");
