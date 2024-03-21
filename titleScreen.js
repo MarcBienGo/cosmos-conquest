@@ -1,0 +1,1 @@
+var gameCanvas = document.getElementById("gameCanvas");
