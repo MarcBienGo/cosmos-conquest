@@ -33,6 +33,13 @@ var bossScoreIncrement = 100;
 var elapsedTime = 0;
 
 
+var gameOverOptions = new Image();
+gameOverOptions.src = "images/gameOverOptions.png";
+gameOverOptions.onload = function() {
+    // to load the image before it's drawn onto canvas
+}
+
+
 // Function to handle keydown event
 function handleKeyDown(event) {
     if(event.code == "ArrowUp" || event.code == "KeyW"){
@@ -335,7 +342,11 @@ function gameOver() {
     ctx.font = "30px Arial";
     ctx.fillStyle = "red";
     ctx.textAlign = "center";
-    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 50);
+
+
+    ctx.drawImage(gameOverOptions, 30, 150, 250, 100);
+    playAgain();
 }
 
 // Function to draw health
@@ -387,6 +398,10 @@ function drawLasers() {
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.closePath();
+
+        // plays a laser sound effect each time a laser is drawn
+        var laserSFX = new Audio("audio/laserSFX.mp3")
+        laserSFX.play();
     });
 }
 
