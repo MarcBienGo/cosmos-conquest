@@ -1,8 +1,3 @@
-.display-container {
-  background-image: url("../images/background.gif");
-  background-size: 310px 290px;
-}
-
 .gameboy {
     position:relative;
     width:450px;
@@ -100,16 +95,15 @@
                 border-radius:50%;
                 background-color:#23252d;
             }
-            }
+          }
         }
     }
     
     .display {
-      
       height:290px;
       width:310px;
       border-radius:3px;
-      margin-bottom:15px;
+      margin-bottom: -4px;
     }
     
     .label {

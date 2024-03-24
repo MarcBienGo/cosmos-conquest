@@ -1,13 +1,20 @@
 const PLAYER_SPEED = 3;
 const ENEMY_SPEED = 1;
-var SPAWN_INTERVAL = 1000; // in milliseconds
 const INITIAL_PLAYER_HEALTH = 200;
 const LASER_SPEED = 10;
+var SPAWN_INTERVAL = 1000; // in milliseconds
 
+var gameCount = 0;
+var enemyInterval, hpInterval, spawnInterval;
+
+var atIntro = true;
+var introMusic; 
+var gameMusic;
+var isGameOver = false;
 
 var canvas = document.getElementById("gameCanvas");
 var ctx = canvas.getContext("2d");
-
+var displayContainer = document.getElementById('display-container');
 var player = {
     x: canvas.width / 2,
     y: canvas.height / 2,
@@ -15,6 +22,19 @@ var player = {
     height: 20,
     health: INITIAL_PLAYER_HEALTH
 };
+
+var title = new Image();
+title.src = "images/title.png";
+
+var pressSpace = new Image();
+pressSpace.src = "images/pressSpace.png";
+
+var credits = new Image();
+credits.src = "images/credits.png";
+
+var gameOverOptions = new Image();
+gameOverOptions.src = "images/gameOverOptions.png";
+
 var enemies = [];
 var lasers = [];
 var hps = [];
@@ -33,9 +53,65 @@ var bossScoreIncrement = 100;
 var elapsedTime = 0;
 
 
+var gameOverOptions = new Image();
+gameOverOptions.src = "images/gameOverOptions.png";
+
+// loads the title screen
+function loadTitleScreen(){
+    displayContainer.style.backgroundImage = "url('images/title.gif')";
+    displayContainer.style.backgroundSize = "cover";
+    atIntro = true;
+    displayTitleScreen();
+}
+
+function displayTitleScreen(){
+    ctx.save();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.drawImage(title, 30, 75, 250, 19);
+    ctx.drawImage(credits, 105, 220, 100, 50);
+    ctx.drawImage(pressSpace, 15, 150, 280, 17);
+    ctx.closePath();
+    ctx.restore();
+}
+
+function playIntroMusic(){
+    if(atIntro){
+        introMusic = new Audio("audio/introMusic.mp3");
+        if(introMusic.paused){
+            introMusic.play();
+        }
+    }
+}
+
+function playGameMusic(){
+    gameMusic = new Audio("audio/gameMusic.mp3");
+    if(gameMusic.paused){
+        gameMusic.play();
+    }
+}
+
 // Function to handle keydown event
-function handleKeyDown(event) {
-    if(event.code == "ArrowUp" || event.code == "KeyW"){
+function handleKeyDown(event){
+    if(event.code == "Space"){
+        if(atIntro){
+            gameCount++;
+            atIntro = false;
+            if(gameCount == 1){
+                playGame();
+            }else{
+                restartGame();
+            }
+
+            if(typeof introMusic != "undefined"){
+                introMusic.pause();
+            }
+        }else if(isGameOver){
+            restartGame();
+        }else{
+            event.preventDefault();
+        }
+    }else if(event.code == "ArrowUp" || event.code == "KeyW"){
         element = document.getElementsByClassName("up")[0];
         element.style.background = "linear-gradient(to top, #565e6a 0%, #333 100%)";
     }else if(event.code == "ArrowDown" || event.code == "KeyS"){
@@ -52,8 +128,65 @@ function handleKeyDown(event) {
     pressedKeys.add(event.key);
 }
 
+function handleEscapeKeyPress(event){
+    if (event.code == "Escape" && isGameOver){
+        location.reload();
+    }
+}
+
+function playGame(){
+    displayContainer.style.backgroundImage = "url('images/background.gif')";
+    displayContainer.style.backgroundSize = "310px 290px";
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    isGameOver = false;
+    // Start the game loop
+    gameLoop();
+    enemyInterval = setInterval(spawnEnemy, SPAWN_INTERVAL);
+    hpInterval = setInterval(spawnHp, 30000);
+    spawnInterval = setInterval(increaseSpawnRate, 1000);
+    playGameMusic();
+}
+
+function restartGame(){
+    // Reset player position and health
+    displayContainer.style.backgroundImage = "url('images/background.gif')";
+    displayContainer.style.backgroundSize = "310px 290px";
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+    player.health = INITIAL_PLAYER_HEALTH;
+    SPAWN_INTERVAL = 1000;
+    scoreIncrement = 1;
+    bossScoreIncrement = 100;
+
+    // Reset score
+    score = 0;
+
+    // Clear arrays
+    enemies = [];
+    lasers = [];
+    hps = [];
+
+    // Reset elapsed time
+    elapsedTime = 0;
+
+    // Clear intervals
+    clearInterval(enemyInterval);
+    clearInterval(hpInterval);
+    clearInterval(spawnInterval);
+
+    // Restart game
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    isGameOver = false;
+    enemyInterval = setInterval(spawnEnemy, SPAWN_INTERVAL);
+    hpInterval = setInterval(spawnHp, 30000);
+    spawnInterval = setInterval(increaseSpawnRate, 1000);
+
+    playGameMusic();
+}
+
+
 // Function to handle keyup event
-function handleKeyUp(event) {
+function handleKeyUp(event){
     var element;
     if(event.code == "ArrowUp" || event.code == "KeyW"){
         element = document.getElementsByClassName("up")[0];
@@ -95,20 +228,6 @@ function leftClickUp(event){
     element.style.lineHeight = "70px";
 }
 
-// Event listeners for keydown and keyup events
-document.addEventListener("keydown", handleKeyDown);
-document.addEventListener("keyup", handleKeyUp);
-
-//Event listener for mouse position tracking
-document.addEventListener("mousemove", handleMouseMove);
-
-//Event listeners for mouse click events
-document.addEventListener("mousedown", leftClickDown);
-document.addEventListener("mouseup", leftClickUp);
-
-// Event listener for player movement
-document.addEventListener("keydown", movePlayer);
-
 // Function to handle mousemove event
 function handleMouseMove(event) {
     mouseX = event.clientX - canvas.getBoundingClientRect().left;
@@ -120,7 +239,7 @@ function handleMouseMove(event) {
 }
 
 // Function to move the player
-function movePlayer() {
+function movePlayer(){
 // Reset player's movement
 let dx = 0;
 let dy = 0;
@@ -159,7 +278,7 @@ if (player.y > canvas.height - player.height) {
 }
 
 // Function to spawn enemies
-function spawnEnemy() {
+function spawnEnemy(){
     // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
     var side = Math.floor(Math.random() * 4) + 1;
     var rng = Math.floor(Math.random() * 3);
@@ -170,7 +289,7 @@ function spawnEnemy() {
         width: 20,
         height: 20,
         health: 10,
-        damage: 5,
+        damage: 15,
         points: 10,
         type: "mob",
         speed: 1
@@ -210,7 +329,7 @@ function spawnEnemy() {
     enemies.push(enemy);
 }
 
-function spawnHp() {
+function spawnHp(){
     var hpDrop = {
         value: 30,
         img: "images/hp.png",
@@ -220,12 +339,10 @@ function spawnHp() {
         height: 20
     };
 
-    console.log(hpDrop.x, hpDrop.y);
-
     hps.push(hpDrop);
 }
 
-function spawnBoss() {
+function spawnBoss(){
     // Randomly determine the side from which the enemy will spawn (1: top, 2: right, 3: bottom, 4: left)
     var side = Math.floor(Math.random() * 4) + 1;
 
@@ -236,7 +353,7 @@ function spawnBoss() {
         height: 60,
         health: 1000,
         damage: 5,
-        points: 100,
+        points: 50,
         type: "boss",
         img: "images/boss.png",
         speed: 0.5
@@ -266,7 +383,7 @@ function spawnBoss() {
 }
 
 // Function to move enemies towards the player
-function moveEnemies() {
+function moveEnemies(){
     enemies.forEach(enemy => {
 
         //calculates distance between player and enemy
@@ -288,7 +405,7 @@ function moveEnemies() {
 }
 
 // Function to draw player
-function drawPlayer() {
+function drawPlayer(){
     var heroImage = new Image();
     heroImage.src = "images/player.png";
 
@@ -309,7 +426,7 @@ function drawPlayer() {
 }
 
 // Function to draw enemies
-function drawEnemies() {
+function drawEnemies(){
     enemies.forEach(enemy => {
         var rng = Math.floor(Math.random() * 2);
         var enemyImage = new Image();
@@ -328,18 +445,26 @@ function drawHpDrop() {
 }
 
 // Function to display game over message
-function gameOver() {
-    gameRunning = false; // Stop the game loop
-    enemies = [];
+function gameOver(){
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.beginPath();
     ctx.font = "30px Arial";
     ctx.fillStyle = "red";
     ctx.textAlign = "center";
-    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+    ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2 - 50);
+    isGameOver = true;
+    if(!gameMusic.paused){
+        gameMusic.pause();
+        gameMusic.currentTime = 0;
+    }
+    ctx.drawImage(gameOverOptions, 30, 150, 250, 100);
+    ctx.closePath();
+    ctx.restore();
 }
 
 // Function to draw health
-function drawHealthBar() {
+function drawHealthBar(){
     const barWidth = 40;
     const barHeight = 5;
     const barX = (player.x - barWidth / 2) + 9.25;
@@ -362,7 +487,7 @@ function drawHealthBar() {
 }
 
 // Main draw function
-function draw() {
+function draw(){
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -378,7 +503,7 @@ function draw() {
     }
 }
 
-function drawLasers() {
+function drawLasers(){
     lasers.forEach(laser => {
         ctx.beginPath();
         ctx.moveTo(laser.x, laser.y);
@@ -387,10 +512,16 @@ function drawLasers() {
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.closePath();
+
+        if(!isGameOver){
+            // plays a laser sound effect each time a laser is drawn
+            var laserSFX = new Audio("audio/laserSFX.mp3");
+            laserSFX.play();
+        }
     });
 }
 
-function spawnLaser() {
+function spawnLaser(){
     // Calculate angle between player and mouse position
     var dx = mouseX - player.x;
     var dy = mouseY - player.y;
@@ -414,8 +545,7 @@ function spawnLaser() {
 }
 
 // Function to update score
-function updateScore(enemyType) {
-    console.log(enemyType)
+function updateScore(enemyType){
     if(enemyType == "mob"){
         score += scoreIncrement;
     }else{
@@ -424,14 +554,14 @@ function updateScore(enemyType) {
 }
 
 // Function to display score
-function drawScore() {
+function drawScore(){
     ctx.font = "20px Arial";
     ctx.fillStyle = "white";
     ctx.fillText("Score: " + score, 10, 30); 
 }
 
 //Function to check if enemy has damaged player
-function checkCollisions() {
+function checkCollisions(){
     enemies.forEach((enemy, enemyIndex) => {
         // Calculate the distance between player and enemy
         var dxPlayerEnemy = player.x - enemy.x;
@@ -512,31 +642,44 @@ function checkCollisions() {
 
 
 //Function to increase difficulty at set intervals
-function increaseSpawnRate() {
+function increaseSpawnRate(){
     elapsedTime += 1000;
     if (elapsedTime >= 30000) {
-        spawnBoss();    
+        spawnBoss();
         scoreIncrement++;
-        bossScoreIncrement += 10;
-        SPAWN_INTERVAL -= 100;
-        clearInterval(spawnEnemy);
-        setInterval(spawnEnemy, SPAWN_INTERVAL);
+        bossScoreIncrement += 5;
+        SPAWN_INTERVAL -= 50;
+        clearInterval(enemyInterval);
+        enemyInterval = setInterval(spawnEnemy, SPAWN_INTERVAL);
         elapsedTime = 0; 
     }
 }
 
 
-function gameLoop() {
+function gameLoop(){
+    requestAnimationFrame(gameLoop);
     movePlayer();
     moveEnemies();
     checkCollisions();
     draw();
-    requestAnimationFrame(gameLoop);
 }
 
-// Start the game loop
-gameLoop();
+// List of all event listeners
+// Event listeners for keydown and keyup events
+document.addEventListener("keydown", handleKeyDown);
+document.addEventListener("keydown", handleEscapeKeyPress);
+document.addEventListener("keyup", handleKeyUp);
 
-setInterval(spawnEnemy, SPAWN_INTERVAL);
-setInterval(spawnHp, 30000);
-setInterval(increaseSpawnRate, 1000);
+//Event listener for mouse position tracking
+document.addEventListener("mousemove", handleMouseMove);
+
+//Event listeners for mouse click events
+document.addEventListener("mousedown", leftClickDown);
+document.addEventListener("mouseup", leftClickUp);
+
+// Event listener for player movement
+document.addEventListener("keydown", movePlayer);
+
+//Event listener for title screen
+window.addEventListener("load", loadTitleScreen);
+window.addEventListener("click", playIntroMusic);
