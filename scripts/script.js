@@ -86,6 +86,7 @@ function playIntroMusic(){
 
 function playGameMusic(){
     gameMusic = new Audio("audio/gameMusic.mp3");
+    gameMusic.loop = true;
     if(gameMusic.paused){
         gameMusic.play();
     }
@@ -135,7 +136,7 @@ function handleEscapeKeyPress(event){
 }
 
 function playGame(){
-    displayContainer.style.backgroundImage = "url('images/background.gif')";
+    displayContainer.style.backgroundImage = "url('images/bg.gif')";
     displayContainer.style.backgroundSize = "310px 290px";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     isGameOver = false;
@@ -149,7 +150,7 @@ function playGame(){
 
 function restartGame(){
     // Reset player position and health
-    displayContainer.style.backgroundImage = "url('images/background.gif')";
+    displayContainer.style.backgroundImage = "url('images/bg.gif')";
     displayContainer.style.backgroundSize = "310px 290px";
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
@@ -461,6 +462,8 @@ function gameOver(){
     ctx.drawImage(gameOverOptions, 30, 150, 250, 100);
     ctx.closePath();
     ctx.restore();
+
+    drawScore();
 }
 
 // Function to draw health
@@ -546,10 +549,12 @@ function spawnLaser(){
 
 // Function to update score
 function updateScore(enemyType){
-    if(enemyType == "mob"){
-        score += scoreIncrement;
-    }else{
-        score += bossScoreIncrement;
+    if(!isGameOver){
+        if(enemyType == "mob"){
+            score += scoreIncrement;
+        }else{
+            score += bossScoreIncrement;
+        }
     }
 }
 
