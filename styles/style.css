@@ -416,3 +416,8 @@ body { padding:30px; display:flex; justify-content:center; align-items:center; b
 .gameboy {
   margin:0 auto;
 }
+
+@font-face {
+  font-family: 'eightBitFont';
+  src: url('../fonts/Minecraft.ttf')
+}

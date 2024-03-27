@@ -136,7 +136,7 @@ function handleEscapeKeyPress(event){
 }
 
 function playGame(){
-    displayContainer.style.backgroundImage = "url('images/bg.gif')";
+    displayContainer.style.backgroundImage = "url('images/background.gif')";
     displayContainer.style.backgroundSize = "310px 290px";
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     isGameOver = false;
@@ -150,7 +150,7 @@ function playGame(){
 
 function restartGame(){
     // Reset player position and health
-    displayContainer.style.backgroundImage = "url('images/bg.gif')";
+    displayContainer.style.backgroundImage = "url('images/background.gif')";
     displayContainer.style.backgroundSize = "310px 290px";
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
@@ -558,9 +558,11 @@ function updateScore(enemyType){
     }
 }
 
+const eightBitFont = new FontFace('8bitFont', 'url(fonts/Minecraft.ttf)');  
+
 // Function to display score
 function drawScore(){
-    ctx.font = "20px Arial";
+    ctx.font = "20px 'eightBitFont'";
     ctx.fillStyle = "white";
     ctx.fillText("Score: " + score, 10, 30); 
 }
