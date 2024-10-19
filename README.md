@@ -42,7 +42,7 @@ Cosmos Conquest is a 2D pixel art game that is set in outer space. The objective
 
 | Color             | Hex                                                                |
 | ----------------- | ------------------------------------------------------------------ |
-| Example Color | ![#daa520](https://via.placeholder.com/10/daa520?text=+) #daa520  |
+| Example Color | ![#daa520](https://via.placeholder.com/10/daa520?text=+) #daa520 |
 | Example Color | ![#b8860b](https://via.placeholder.com/10/b8860b?text=+) #b8860b |
 | Example Color | ![#67879a](https://via.placeholder.com/10/67879a?text=+) #67879a |
 | Example Color | ![#2c313e](https://via.placeholder.com/10/2c313e?text=+) #2c313e |
