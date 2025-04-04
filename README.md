@@ -1,7 +1,7 @@
 
 # Cosmos Conquest
 
-Cosmos Conquest is a 2D pixel art game that is set in outer space. The objective of the game is to defeat aliens while continuing to survive their endless attacks.
+[Cosmos Conquest](https://marcbiengo.github.io/cosmos-conquest/) is a 2D pixel art game that is set in outer space. The objective of the game is to defeat aliens while continuing to survive their endless attacks.
 
 ## Authors
 
